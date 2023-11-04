@@ -36,3 +36,26 @@ func CreateBroadcastEnvelope(n *nwo.Network, entity interface{}, channel string,
 
 	return env
 }
+
+func CreateBroadcastEndorserTransactionEnvelope(n *nwo.Network, entity interface{}, channel string, data []byte) *common.Envelope {
+	var signer *nwo.SigningIdentity
+	switch creator := entity.(type) {
+	case *nwo.Peer:
+		signer = n.PeerUserSigner(creator, "Admin")
+	case *nwo.Orderer:
+		signer = n.OrdererUserSigner(creator, "Admin")
+	}
+	Expect(signer).NotTo(BeNil())
+
+	env, err := protoutil.CreateSignedEnvelope(
+		common.HeaderType_ENDORSER_TRANSACTION,
+		channel,
+		signer,
+		&common.Envelope{Payload: data},
+		0,
+		0,
+	)
+	Expect(err).NotTo(HaveOccurred())
+
+	return env
+}
